@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Despesas">
+<title>Despesas</title>
+<style>
+:root{--bg:#eef1f5;--card:#fff;--tx:#0f1a2b;--mu:#6b7686;--ac:#1f5eff;--acs:#e4ebff;--bd:#dde2ea;--rd:#c0261d;--ok:#0a7a5a;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b111b;--card:#151d2b;--tx:#eef2f8;--mu:#8d99ab;--ac:#6d93ff;--acs:#1c2a4d;--bd:#26324a;--rd:#ff7b72;--ok:#4fd1a5;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b111b;--card:#151d2b;--tx:#eef2f8;--mu:#8d99ab;--ac:#6d93ff;--acs:#1c2a4d;--bd:#26324a;--rd:#ff7b72;--ok:#4fd1a5;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-bottom:84px}
+main{max-width:520px;margin:0 auto;padding:16px}
+h1{font-size:15px;font-weight:600;color:var(--mu);margin:4px 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-bottom:12px}
+.amt{display:flex;align-items:baseline;gap:6px;justify-content:center;padding:8px 0 4px}
+.amt input{font-size:56px;font-weight:700;width:100%;max-width:260px;text-align:center;border:0;background:none;color:var(--tx);outline:none;font-variant-numeric:tabular-nums}
+.amt span{font-size:28px;color:var(--mu)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cat{border:1.5px solid var(--bd);background:var(--card);color:var(--tx);border-radius:14px;padding:10px 4px;font:inherit;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.cat b{font-size:24px;font-weight:400}
+.cat.on{border-color:var(--ac);background:var(--acs)}
+input.f{width:100%;font:inherit;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);margin-top:8px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{width:100%;border:0;border-radius:14px;padding:15px;font:inherit;font-weight:600;background:var(--ac);color:#fff;margin-top:12px;cursor:pointer}
+.btn.s{background:var(--acs);color:var(--ac);margin-top:8px;padding:11px;font-size:14px}
+.btn:disabled{opacity:.4}
+.li{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--bd)}
+.li:first-child{border-top:0}
+.li .e{font-size:22px;width:34px;text-align:center}
+.li .m{flex:1;min-width:0}
+.li .m small{display:block;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .v{font-weight:600;font-variant-numeric:tabular-nums}
+.x{border:0;background:none;color:var(--mu);font:inherit;font-size:13px;padding:6px;cursor:pointer}
+.x.arm{color:var(--rd);font-weight:600}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.nav button{border:1px solid var(--bd);background:var(--card);color:var(--tx);width:40px;height:40px;border-radius:12px;font-size:20px;cursor:pointer}
+.nav strong{text-transform:capitalize}
+.tot{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;margin:0}
+.bar{height:8px;border-radius:4px;background:var(--acs);margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ac);border-radius:4px}
+.cr{margin:12px 0}
+.cr div{display:flex;justify-content:space-between}
+.mu{color:var(--mu);font-size:14px}
+.empty{color:var(--mu);text-align:center;padding:16px 0}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+.tabs button{flex:1;border:0;background:none;color:var(--mu);font:inherit;font-size:12px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.tabs button b{font-size:22px;font-weight:400}
+.tabs button.on{color:var(--ac);font-weight:600}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:20px;font-size:14px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav class="tabs" id="tabs"></nav>
+<script>
+const K="despesas-v1";
+const DEF=[["🛒","Mercearia"],["🍽️","Restaurantes"],["🚗","Transportes"],["🏠","Casa"],["💊","Saúde"],["🎉","Lazer"],["🛍️","Compras"],["📦","Outros"]];
+const fmt=n=>new Intl.NumberFormat("pt-PT",{style:"currency",currency:"EUR"}).format(n);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+let S;
+try{S=JSON.parse(localStorage.getItem(K))}catch(e){S=null}
+if(!S||!S.cats){S={cats:DEF.map((c,i)=>({id:"c"+i,e:c[0],n:c[1]})),exps:[]}}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+let view="add",sel=null,amt="",note="",date=today(),ym=today().slice(0,7),armed=null,toast="";
+const cat=id=>S.cats.find(c=>c.id===id)||{e:"❔",n:"Sem categoria"};
+const monthExps=()=>S.exps.filter(x=>x.d.slice(0,7)===ym).sort((a,b)=>b.d.localeCompare(a.d)||b.t-a.t);
+const sum=a=>a.reduce((s,x)=>s+x.v,0);
+const dl=d=>{const[y,m,dd]=d.split("-");return new Date(y,m-1,dd).toLocaleDateString("pt-PT",{day:"numeric",month:"short"})};
+function item(x,del){const c=cat(x.c);return `<div class="li"><div class="e">${c.e}</div><div class="m">${esc(c.n)}<small>${dl(x.d)}${x.n?" · "+esc(x.n):""}</small></div><div class="v">${fmt(x.v)}</div>${del?`<button class="x ${armed===x.id?"arm":""}" data-a="del" data-id="${x.id}">${armed===x.id?"Confirmar?":"Apagar"}</button>`:""}</div>`}
+function render(){
+  let h="";
+  if(view==="add"){
+    const td=sum(S.exps.filter(x=>x.d===today())),rec=[...S.exps].sort((a,b)=>b.t-a.t).slice(0,4);
+    h=`<h1>Nova despesa</h1><div class="card"><div class="amt"><input id="amt" inputmode="decimal" placeholder="0,00" value="${esc(amt)}" autocomplete="off"><span>€</span></div>
+    <div class="grid">${S.cats.map(c=>`<button class="cat ${sel===c.id?"on":""}" data-a="sel" data-id="${c.id}"><b>${c.e}</b>${esc(c.n)}</button>`).join("")}</div>
+    <div class="row2"><input class="f" id="date" type="date" value="${date}"><input class="f" id="note" placeholder="Nota (opcional)" value="${esc(note)}"></div>
+    <button class="btn" data-a="save" ${parse(amt)>0&&sel?"":"disabled"}>Guardar despesa</button></div>
+    <div class="card"><div class="mu">Hoje: <b style="color:var(--tx)">${fmt(td)}</b></div>${rec.length?rec.map(x=>item(x,false)).join(""):'<div class="empty">Ainda sem despesas. Escolha uma categoria e registe a primeira.</div>'}</div>`;
+  }else{
+    const L=monthExps(),t=sum(L),[y,m]=ym.split("-"),lab=new Date(y,m-1,1).toLocaleDateString("pt-PT",{month:"long",year:"numeric"});
+    const nav=`<div class="nav"><button data-a="prev" aria-label="Mês anterior">‹</button><strong>${lab}</strong><button data-a="next" aria-label="Mês seguinte">›</button></div>`;
+    if(view==="month"){
+      const by=S.cats.map(c=>({c,v:sum(L.filter(x=>x.c===c.id))})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v);
+      h=nav+`<div class="card"><div class="mu">Total gasto</div><p class="tot">${fmt(t)}</p>${L.length?`<div class="mu">${L.length} registos · média ${fmt(t/L.length)}</div>`:""}</div>
+      <div class="card">${by.length?by.map(r=>`<div class="cr"><div><span>${r.c.e} ${esc(r.c.n)}</span><b>${fmt(r.v)}</b></div><div class="bar"><i style="width:${Math.round(r.v/t*100)}%"></i></div><span class="mu">${Math.round(r.v/t*100)}%</span></div>`).join(""):'<div class="empty">Sem despesas neste mês.</div>'}</div>
+      <div class="card"><button class="btn s" style="margin:0" data-a="csv">Copiar dados em CSV</button></div>`;
+    }else if(view==="list"){
+      h=nav+`<div class="card">${L.length?L.map(x=>item(x,true)).join(""):'<div class="empty">Sem despesas neste mês.</div>'}</div>`;
+    }else{
+      h=`<h1>Categorias</h1><div class="card">${S.cats.map(c=>`<div class="li"><div class="e">${c.e}</div><div class="m">${esc(c.n)}</div><button class="x ${armed===c.id?"arm":""}" data-a="delcat" data-id="${c.id}">${armed===c.id?"Confirmar?":"Remover"}</button></div>`).join("")}
+      <div class="row2"><input class="f" id="ne" placeholder="Emoji" maxlength="4"><input class="f" id="nn" placeholder="Nome"></div><button class="btn s" data-a="addcat">Adicionar categoria</button></div>
+      <p class="mu">Os dados ficam guardados só neste telemóvel. Remover uma categoria não apaga as despesas já registadas.</p>`;
+    }
+  }
+  document.getElementById("app").innerHTML=h+(toast?`<div class="toast">${toast}</div>`:"");
+  const T=[["add","➕","Registar"],["month","📊","Mês"],["list","🧾","Histórico"],["cats","🏷️","Categorias"]];
+  document.getElementById("tabs").innerHTML=T.map(t=>`<button class="${view===t[0]?"on":""}" data-a="tab" data-id="${t[0]}"><b>${t[1]}</b>${t[2]}</button>`).join("");
+}
+function parse(s){return parseFloat(String(s).replace(",","."))||0}
+function say(m){toast=m;render();setTimeout(()=>{toast="";render()},1800)}
+function shift(d){const[y,m]=ym.split("-").map(Number);const n=new Date(y,m-1+d,1);ym=n.getFullYear()+"-"+pad(n.getMonth()+1)}
+document.addEventListener("input",e=>{
+  if(e.target.id==="amt"){amt=e.target.value;const b=document.querySelector('[data-a="save"]');if(b)b.disabled=!(parse(amt)>0&&sel)}
+  if(e.target.id==="note")note=e.target.value;
+  if(e.target.id==="date")date=e.target.value||today();
+});
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-a]");if(!b)return;
+  const a=b.dataset.a,id=b.dataset.id;
+  if(a==="tab"){view=id;armed=null}
+  else if(a==="sel"){sel=id}
+  else if(a==="save"){const v=parse(amt);if(v>0&&sel){S.exps.push({id:"e"+Date.now(),v:Math.round(v*100)/100,c:sel,d:date,n:note.trim(),t:Date.now()});save();amt="";note="";date=today();sel=null;say("Despesa guardada");return}}
+  else if(a==="prev")shift(-1);
+  else if(a==="next")shift(1);
+  else if(a==="del"){if(armed===id){S.exps=S.exps.filter(x=>x.id!==id);armed=null;save()}else armed=id}
+  else if(a==="delcat"){if(armed===id){S.cats=S.cats.filter(x=>x.id!==id);armed=null;save()}else armed=id}
+  else if(a==="addcat"){const n=document.getElementById("nn").value.trim(),em=document.getElementById("ne").value.trim()||"🏷️";if(n){S.cats.push({id:"c"+Date.now(),e:em,n});save()}}
+  else if(a==="csv"){
+    const rows=["data;categoria;valor;nota",...[...S.exps].sort((x,y)=>x.d.localeCompare(y.d)).map(x=>[x.d,cat(x.c).n,String(x.v).replace(".",","),(x.n||"").replace(/;/g,",")].join(";"))].join("\n");
+    const ok=()=>say("CSV copiado");
+    try{navigator.clipboard.writeText(rows).then(ok,()=>say("Não foi possível copiar"))}catch(err){say("Não foi possível copiar")}
+    return;
+  }
+  render();
+});
+render();
+</script>
+</body>
+</html>
