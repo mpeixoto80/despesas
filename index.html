@@ -130,7 +130,28 @@ document.addEventListener("click",e=>{
   }
   render();
 });
+let pending="";
+(function(){
+  try{
+    const p=new URLSearchParams(location.search);
+    if(!p.has("v"))return;
+    const v=parse(p.get("v")),cn=(p.get("c")||"").trim(),n=(p.get("n")||"").trim();
+    if(v>0){
+      const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+      let c=S.cats.find(x=>norm(x.n)===norm(cn));
+      if(!c){
+        c=S.cats.find(x=>norm(x.n)==="outros");
+        if(!c){c={id:"c"+Date.now(),e:"🏷️",n:cn||"Outros"};S.cats.push(c)}
+      }
+      S.exps.push({id:"e"+Date.now(),v:Math.round(v*100)/100,c:c.id,d:today(),n,t:Date.now()});
+      save();
+      pending="Guardado: "+fmt(v)+" em "+c.n;
+    }
+    history.replaceState(null,"",location.pathname);
+  }catch(e){}
+})();
 render();
+if(pending)say(pending);
 </script>
 </body>
 </html>
